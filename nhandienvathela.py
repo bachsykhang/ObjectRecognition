@@ -14,7 +14,7 @@ urllib.request.urlretrieve(url, file_name)
 car_cascade = cv2.CascadeClassifier(file_name)
 
 # Đọc video từ file hoặc stream video từ webcam
-video_capture = cv2.VideoCapture('Xeco.mp4')  # Thay đổi đường dẫn nếu sử dụng video từ file
+video_capture = cv2.VideoCapture('HCM.mp4')  # Thay đổi đường dẫn nếu sử dụng video từ file
 
 while True:
     # Đọc từng frame từ video
@@ -22,18 +22,21 @@ while True:
     if not ret:
         break
 
+    # Giảm kích thước frame để tăng tốc độ xử lý
+    resized_frame = cv2.resize(frame, (640, 360))  # Giảm kích thước frame xuống còn 640x360
+
     # Chuyển đổi ảnh sang ảnh xám để tăng tốc độ xử lý
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
 
     # Sử dụng Haar Cascade Classifier để nhận diện xe cộ trong frame
-    cars = car_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+    cars = car_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(30, 30))
 
     # Vẽ hình chữ nhật xung quanh các xe cộ nhận diện được
     for (x, y, w, h) in cars:
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
     # Hiển thị frame với các hình chữ nhật được vẽ xung quanh xe cộ
-    cv2.imshow('Car Detection', frame)
+    cv2.imshow('Car Detection', resized_frame)
 
     # Thoát khỏi vòng lặp khi nhấn phím 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
