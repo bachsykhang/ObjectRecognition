@@ -16,7 +16,7 @@ urllib.request.urlretrieve(url, file_name)
 car_cascade = cv2.CascadeClassifier(file_name)
 
 # Đọc video từ file hoặc stream video từ webcam
-video_capture = cv2.VideoCapture('Xeco.mp4')  # Thay đổi đường dẫn nếu sử dụng video từ file
+video_capture = cv2.VideoCapture('HCM.mp4')  # Thay đổi đường dẫn nếu sử dụng video từ file
 
 # Khởi tạo đối tượng pyttsx3 cho giọng nói
 engine = pyttsx3.init()
