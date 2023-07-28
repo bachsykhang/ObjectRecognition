@@ -49,6 +49,8 @@ while True:
 
     # Vẽ hình chữ nhật xung quanh các xe cộ nhận diện được
     for (x, y, w, h) in cars:
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter('output.mp4', fourcc, 25.0, (640, 480))
          # Tính khoảng cách từ tọa độ của đối tượng đến trung tâm khung hình
         distance = abs(x + w/2 - resized_frame.shape[1]/2)
         # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
@@ -59,10 +61,11 @@ while True:
                 # Sử dụng luồng riêng biệt để phát cảnh báo bằng giọng nói mà không làm dừng frame
                 warning_thread = threading.Thread(target=speak_warning)
                 warning_thread.start()
+                # Vẽ một khung đổ khi có cảnh báo
+                cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
 
     # Hiển thị frame với các hình chữ nhật được vẽ xung quanh xe cộ
     cv2.imshow('Car Detection', resized_frame)
-
     # Thoát khỏi vòng lặp khi nhấn phím 'q'
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
