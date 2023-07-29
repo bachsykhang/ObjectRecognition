@@ -1,4 +1,5 @@
 import cv2
+import pytesseract
 import urllib.request
 import pyttsx3
 import threading
@@ -22,9 +23,14 @@ video_capture = cv2.VideoCapture('Xeco.mp4')  # Thay đổi đường dẫn nế
 engine = pyttsx3.init()
 
 # Vị trí nguy hiểm dưới vị trí trục x (đơn vị: pixel)
-danger_zone_y = 300
+danger_zone_y = 280
 # Khoảng cách tối đa để phát hiện đối tượng xe
 max_distance = 150 
+# Khai báo đường dẫn tesseract
+pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+
+# Khai báo biến để lưu thông tin xe cộ
+vehicle_info = {}
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
 def speak_warning():
     # Phát ra cảnh báo bằng giọng nói
@@ -45,12 +51,10 @@ while True:
     gray = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
 
     # Sử dụng Haar Cascade Classifier để nhận diện xe cộ trong frame
-    cars = car_cascade.detectMultiScale(gray, scaleFactor=1.05, minNeighbors=5, minSize=(40, 40))
+    cars = car_cascade.detectMultiScale(gray, scaleFactor=1.09, minNeighbors=5, minSize=(35, 35))
 
     # Vẽ hình chữ nhật xung quanh các xe cộ nhận diện được
     for (x, y, w, h) in cars:
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        out = cv2.VideoWriter('output.mp4', fourcc, 25.0, (640, 480))
          # Tính khoảng cách từ tọa độ của đối tượng đến trung tâm khung hình
         distance = abs(x + w/2 - resized_frame.shape[1]/2)
         # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
