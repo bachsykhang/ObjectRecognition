@@ -1,5 +1,4 @@
 import cv2
-import pytesseract
 import urllib.request
 import pyttsx3
 import threading
@@ -26,9 +25,6 @@ engine = pyttsx3.init()
 danger_zone_y = 280
 # Khoảng cách tối đa để phát hiện đối tượng xe
 max_distance = 150 
-# Khai báo đường dẫn tesseract
-pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
-
 # Khai báo biến để lưu thông tin xe cộ
 vehicle_info = {}
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
