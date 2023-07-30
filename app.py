@@ -10,6 +10,8 @@ engine = pyttsx3.init()
 
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
 def speak_warning():
+    # Lấy đối tượng engine mới cho mỗi lần gọi hàm
+    engine = pyttsx3.init()
     # Phát ra cảnh báo bằng giọng nói
     engine.say("Watch out for warnings")
     engine.setProperty('volume', 4)
