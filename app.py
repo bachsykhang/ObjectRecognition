@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response
 import cv2
 import pyttsx3
 import threading
+import numpy as np
 
 app = Flask(__name__)
 
@@ -17,10 +18,13 @@ def speak_warning():
     engine.setProperty('volume', 4)
     engine.runAndWait()
 
-# Đoạn mã Python chạy trên video
+# Đoạn mã Python chạy trên video với YOLO
 def process_video():
-    # Load Haar Cascade Classifier cho xe cộ
-    car_cascade = cv2.CascadeClassifier('haarcascade_car.xml')
+    # Load YOLO
+    net = cv2.dnn.readNet('yolov3-tiny.cfg', 'yolov3-tiny.weights')
+    classes = []
+    with open('coco.names', 'r') as f:
+        classes = f.read().strip().split('\n')
 
     # Đọc video từ file hoặc stream video từ webcam
     video_capture = cv2.VideoCapture('video/video2.mp4')  
@@ -29,8 +33,6 @@ def process_video():
     danger_zone_y = 280
     # Khoảng cách tối đa để phát hiện đối tượng xe
     max_distance = 150 
-    # Khai báo biến để lưu thông tin xe cộ
-    vehicle_info = {}
 
     while True:
         ret, frame = video_capture.read()
@@ -40,26 +42,39 @@ def process_video():
         # Giảm kích thước frame để tăng tốc độ xử lý
         resized_frame = cv2.resize(frame, (640, 360))  # Giảm kích thước frame xuống còn 640x360
 
-        # Chuyển đổi ảnh sang ảnh xám để tăng tốc độ xử lý
-        gray = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2GRAY)
+        # Chuẩn hóa ảnh, tạo blob và lấy thông tin khung hình
+        blob = cv2.dnn.blobFromImage(resized_frame, 1/255.0, (416, 416), swapRB=True, crop=False)
+        net.setInput(blob)
 
-        # Sử dụng Haar Cascade Classifier để nhận diện xe cộ trong frame
-        cars = car_cascade.detectMultiScale(gray, scaleFactor=1.09, minNeighbors=5, minSize=(35, 35))
+        # Xác định các tên output layers của mô hình
+        out_layer_names = net.getUnconnectedOutLayersNames()
 
-        # Vẽ hình chữ nhật xung quanh các xe cộ nhận diện được
-        for (x, y, w, h) in cars:
-            # Tính khoảng cách từ tọa độ của đối tượng đến trung tâm khung hình
-            distance = abs(x + w/2 - resized_frame.shape[1]/2)
-            # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
-            if distance <= max_distance:
-                cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                # Kiểm tra nếu vị trí y của khung ảnh nằm gần dưới vị trí trục x (nguy hiểm)
-                if y + h >= danger_zone_y:
-                    # Sử dụng luồng riêng biệt để phát cảnh báo bằng giọng nói mà không làm dừng frame
-                    warning_thread = threading.Thread(target=speak_warning)
-                    warning_thread.start()
-                    # Vẽ một khung đổ khi có cảnh báo
-                    cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
+        # Sử dụng các tên output layers để lấy kết quả
+        outs = net.forward(out_layer_names)
+
+        # Xử lý kết quả từ YOLO để vẽ hình chữ nhật và phát cảnh báo
+        for out in outs:
+            for detection in out:
+                scores = detection[5:]
+                class_id = np.argmax(scores)
+                confidence = scores[class_id]
+                if confidence > 0.5 and classes[class_id] == 'car':
+                    center_x = int(detection[0] * resized_frame.shape[1])
+                    center_y = int(detection[1] * resized_frame.shape[0])
+                    w = int(detection[2] * resized_frame.shape[1])
+                    h = int(detection[3] * resized_frame.shape[0])
+                    x = int(center_x - w / 2)
+                    y = int(center_y - h / 2)
+                    # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
+                    if abs(center_y + h/2 - resized_frame.shape[0]/2) <= max_distance:
+                        cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        # Kiểm tra nếu vị trí y của khung ảnh nằm gần dưới vị trí trục x (nguy hiểm)
+                        if center_y + h >= danger_zone_y:
+                            # Sử dụng luồng riêng biệt để phát cảnh báo bằng giọng nói mà không làm dừng frame
+                            warning_thread = threading.Thread(target=speak_warning)
+                            warning_thread.start()
+                            # Vẽ một khung đổ khi có cảnh báo
+                            cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
 
         # Gửi frame đã xử lý dưới dạng byte để hiển thị trên trang web
         ret, buffer = cv2.imencode('.jpg', resized_frame)
@@ -69,7 +84,7 @@ def process_video():
 
     # Giải phóng tài nguyên
     video_capture.release()
-    cv2.destroyAllWindows()
+
 
 @app.route('/')
 def index():
