@@ -51,30 +51,42 @@ def process_video(video_path):
 
         # Sử dụng các tên output layers để lấy kết quả
         outs = net.forward(out_layer_names)
-
+        detected_objects = []
         # Xử lý kết quả từ YOLO để vẽ hình chữ nhật và phát cảnh báo
-        for out in outs:
-            for detection in out:
-                scores = detection[5:]
-                class_id = np.argmax(scores)
-                confidence = scores[class_id]
-                if confidence > 0.5 and classes[class_id] == 'car':
-                    center_x = int(detection[0] * resized_frame.shape[1])
-                    center_y = int(detection[1] * resized_frame.shape[0])
-                    w = int(detection[2] * resized_frame.shape[1])
-                    h = int(detection[3] * resized_frame.shape[0])
-                    x = int(center_x - w / 2)
-                    y = int(center_y - h / 2)
+        detections = np.concatenate(outs)
+        for detection in detections:
+            class_id = np.argmax(detection[5:])
+            confidence = detection[5:][class_id]
+            if confidence > 0.5 and classes[class_id] == 'car':
+                frame_width = resized_frame.shape[1]
+                frame_height = resized_frame.shape[0]
+                center_x = int(detection[0] * frame_width)
+                center_y = int(detection[1] * frame_height)
+                w = int(detection[2] * frame_width)
+                h = int(detection[3] * frame_height)
+                x = int(center_x - w / 2)
+                y = int(center_y - h / 2)
+                 # Kiểm tra xem đối tượng đã được xác định trước đó hay chưa
+                is_detected = False
+                for obj in detected_objects:
+                    if abs(center_x - obj[0]) <= w / 2 and abs(center_y - obj[1]) <= h / 2:
+                        is_detected = True
+                        break
+
+                if not is_detected:
                     # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
                     if abs(center_y + h/2 - resized_frame.shape[0]/2) <= max_distance:
                         cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         # Kiểm tra nếu vị trí y của khung ảnh nằm gần dưới vị trí trục x (nguy hiểm)
-                        if center_y + h >= danger_zone_y:
+                        if (center_y + h) >= danger_zone_y:
                             # Sử dụng luồng riêng biệt để phát cảnh báo bằng giọng nói mà không làm dừng frame
                             warning_thread = threading.Thread(target=speak_warning)
                             warning_thread.start()
                             # Vẽ một khung đổ khi có cảnh báo
-                            cv2.rectangle(resized_frame, (x, y+ h), (x + w, y + h), (0, 0, 225), 2)
+                            cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
+                    # Lưu trữ thông tin về đối tượng đã được xác định
+                    detected_objects.append((center_x, center_y))
+                    
 
         # Gửi frame đã xử lý dưới dạng byte để hiển thị trên trang web
         ret, buffer = cv2.imencode('.jpg', resized_frame)
