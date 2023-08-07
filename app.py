@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
 import cv2
 import pyttsx3
 import threading
@@ -19,15 +19,15 @@ def speak_warning():
     engine.runAndWait()
 
 # Đoạn mã Python chạy trên video với YOLO
-def process_video():
+def process_video(video_path):
     # Load YOLO
-    net = cv2.dnn.readNet('yolov3-tiny.cfg', 'yolov3-tiny.weights')
+    net = cv2.dnn.readNet('yolov4-tiny.cfg', 'yolov4-tiny.weights')
     classes = []
     with open('coco.names', 'r') as f:
         classes = f.read().strip().split('\n')
 
     # Đọc video từ file hoặc stream video từ webcam
-    video_capture = cv2.VideoCapture('video/video2.mp4')  
+    video_capture = cv2.VideoCapture(video_path)  
 
     # Vị trí nguy hiểm dưới vị trí trục x (đơn vị: pixel)
     danger_zone_y = 280
@@ -74,7 +74,7 @@ def process_video():
                             warning_thread = threading.Thread(target=speak_warning)
                             warning_thread.start()
                             # Vẽ một khung đổ khi có cảnh báo
-                            cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
+                            cv2.rectangle(resized_frame, (x, y+ h), (x + w, y + h), (0, 0, 225), 2)
 
         # Gửi frame đã xử lý dưới dạng byte để hiển thị trên trang web
         ret, buffer = cv2.imencode('.jpg', resized_frame)
@@ -90,13 +90,20 @@ def process_video():
 def index():
     return render_template('index.html')  # Trả về file HTML để hiển thị trên trang web
 
-# Route để hiển thị video
-def gen(camera):
-    return Response(process_video(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/video_feed')
+# Route để hiển thị video
+def gen(video_path):
+    return Response(process_video(video_path), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route('/video_feed', methods=['POST'])
 def video_feed():
-    return gen(cv2.VideoCapture('video/video2.mp4'))
+    if request.method == 'POST':
+        video = request.files['video']
+        video.save('video/video.mp4')
+        return gen('video/video.mp4')
+    return "No video file provided."
+
 
 if __name__ == '__main__':
     app.run()

@@ -2,9 +2,57 @@
 <html>
   <head>
     <title>Car Detection</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 20px;
+      }
+
+      h1 {
+        color: #333;
+        text-align: center;
+      }
+
+      form {
+        margin-top: 20px;
+        text-align: center;
+      }
+
+      input[type="file"] {
+        display: block;
+        margin: 10px auto;
+      }
+
+      input[type="submit"] {
+        display: block;
+        margin: 10px auto;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+
+      img {
+        display: block;
+        margin: 20px auto;
+        max-width: 40%;
+        height: auto;
+      }
+    </style>
   </head>
   <body>
     <h1>Car Detection</h1>
-    <img src="{{ url_for('video_feed') }}">
+    <form action="/video_feed" method="post" enctype="multipart/form-data">
+      <input type="file" name="video" accept="video/*">
+      <input type="submit" value="Upload" name="submit">
+    </form>
+    {% if not video_uploaded %}
+      <img src="https://static.chotot.com/storage/chotot-kinhnghiem/xe/2023/05/faafe38d-canh-bao-va-cham-tren-o-to.jpg">
+    {% else %}
+      <img src="{{ url_for('video_feed') }}">
+    {% endif %}
   </body>
 </html>
