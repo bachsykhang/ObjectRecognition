@@ -6,9 +6,12 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Khởi tạo đối tượng pyttsx3 cho giọng nói
-engine = pyttsx3.init()
 
+#Danh sách các vật thể để hệ thống nhận diện
+with open('phuongTien.txt', 'r') as file:
+    # Đọc nội dung của file
+    transportName = []
+    transportName = file.read()
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
 def speak_warning():
     # Lấy đối tượng engine mới cho mỗi lần gọi hàm
@@ -57,7 +60,9 @@ def process_video(video_path):
         for detection in detections:
             class_id = np.argmax(detection[5:])
             confidence = detection[5:][class_id]
-            if confidence > 0.5 and classes[class_id] == 'car':
+            if confidence > 0.5 and classes[class_id] in transportName:
+                coco_class_index = transportName.index(classes[class_id])
+                classes[class_id] = transportName[coco_class_index]
                 frame_width = resized_frame.shape[1]
                 frame_height = resized_frame.shape[0]
                 center_x = int(detection[0] * frame_width)
@@ -77,6 +82,7 @@ def process_video(video_path):
                     # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
                     if abs(center_y + h/2 - resized_frame.shape[0]/2) <= max_distance:
                         cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        cv2.putText(resized_frame, classes[class_id], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
                         # Kiểm tra nếu vị trí y của khung ảnh nằm gần dưới vị trí trục x (nguy hiểm)
                         if (center_y + h) >= danger_zone_y:
                             # Sử dụng luồng riêng biệt để phát cảnh báo bằng giọng nói mà không làm dừng frame
