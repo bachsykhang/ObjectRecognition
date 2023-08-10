@@ -7,11 +7,11 @@ import numpy as np
 app = Flask(__name__)
 
 
-#Danh sách các vật thể để hệ thống nhận diện
+# Danh sách các vật thể để hệ thống nhận diện
 with open('phuongTien.txt', 'r') as file:
-    # Đọc nội dung của file
-    transportName = []
-    transportName = file.read()
+    # Đọc nội dung của file và tách thành danh sách các phần tử
+    transportName = file.read().strip().split('\n')
+
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
 def speak_warning():
     # Lấy đối tượng engine mới cho mỗi lần gọi hàm
