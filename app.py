@@ -11,7 +11,13 @@ app = Flask(__name__)
 with open('phuongTien.txt', 'r') as file:
     # Đọc nội dung của file và tách thành danh sách các phần tử
     transportName = file.read().strip().split('\n')
-
+# Hàm để chụp và lưu ảnh
+def capture_and_save_frame(frame):
+    # Chụp ảnh từ khung hình hiện tại
+    captured_frame = frame.copy()
+    # Lưu ảnh vào file
+    cv2.imwrite("Image.jpg", captured_frame)
+    print("Đã chụp và lưu ảnh thành công.")
 # Hàm để đọc cảnh báo bằng giọng nói mà không làm dừng frame
 def speak_warning():
     # Lấy đối tượng engine mới cho mỗi lần gọi hàm
@@ -20,7 +26,6 @@ def speak_warning():
     engine.say("Watch out for warnings")
     engine.setProperty('volume', 4)
     engine.runAndWait()
-
 # Đoạn mã Python chạy trên video với YOLO
 def process_video(video_path):
     # Load YOLO
@@ -81,7 +86,7 @@ def process_video(video_path):
                 if not is_detected:
                     # Chỉ vẽ đối tượng và phát cảnh báo nếu nó ở gần trung tâm khung hình
                     if abs(center_y + h/2 - resized_frame.shape[0]/2) <= max_distance:
-                        cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                        img = cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                         cv2.putText(resized_frame, classes[class_id], (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
                         # Kiểm tra nếu vị trí y của khung ảnh nằm gần dưới vị trí trục x (nguy hiểm)
                         if (center_y + h) >= danger_zone_y:
@@ -90,9 +95,10 @@ def process_video(video_path):
                             warning_thread.start()
                             # Vẽ một khung đổ khi có cảnh báo
                             cv2.rectangle(resized_frame, (x, y), (x + w, y + h), (0, 0, 225), 2)
+                            # Chụp và lưu ảnh
+                            capture_and_save_frame(resized_frame)
                     # Lưu trữ thông tin về đối tượng đã được xác định
                     detected_objects.append((center_x, center_y))
-                    
 
         # Gửi frame đã xử lý dưới dạng byte để hiển thị trên trang web
         ret, buffer = cv2.imencode('.jpg', resized_frame)
