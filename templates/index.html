@@ -41,6 +41,11 @@
         max-width: 40%;
         height: auto;
       }
+      
+      .nhandiencamera {
+          text-align: center;
+      }
+      
     </style>
   </head>
   <body>
@@ -54,5 +59,6 @@
     {% else %}
       <img src="{{ url_for('video_feed') }}">
     {% endif %}
+    <div class="nhandiencamera"><a href="{{ url_for('camera') }}">Nhận diện bằng camera</a></div>
   </body>
 </html>
