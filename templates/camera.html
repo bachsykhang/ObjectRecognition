@@ -1,77 +1,36 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <title>Car Detection</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
-      margin: 0;
-      padding: 20px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Feed</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f2f2f2;
+        }
 
-    h1 {
-      color: #333;
-      text-align: center;
-    }
+        #video-container {
+            max-width: 100%;
+            overflow: hidden;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
 
-    #video-container {
-      text-align: center;
-    }
-
-    #video {
-      max-width: 100%;
-      height: auto;
-    }
-  </style>
+        #video {
+            width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
-  <h1>Car Detection</h1>
-  <div id="video-container">
-      <img id="video" src="{{ url_for('camera_feed') }}" alt="Car Detection Video">
-  </div>
-
-  <script>
-    // Lấy video element
-    const video = document.getElementById('video');
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    const offscreenCanvas = document.createElement('canvas');
-    const offscreenContext = offscreenCanvas.getContext('2d');
-    let mediaStream = null;
-
-    async function startCamera() {
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = mediaStream;
-        video.play();
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        offscreenCanvas.width = video.videoWidth;
-        offscreenCanvas.height = video.videoHeight;
-        setInterval(updateCanvas, 200); // Tần suất cập nhật mỗi 200ms
-      } catch (error) {
-        console.error('Lỗi khi mở camera:', error);
-      }
-    }
-
-    function updateCanvas() {
-      if (mediaStream) {
-        offscreenContext.drawImage(video, 0, 0, offscreenCanvas.width, offscreenCanvas.height);
-
-        // Thực hiện xử lý ảnh trên offscreen canvas (ở đây có thể thêm code xử lý ảnh nếu cần)
-
-        // Vẽ ảnh đã xử lý lên canvas hiển thị
-        context.drawImage(offscreenCanvas, 0, 0, canvas.width, canvas.height);
-
-        // Cập nhật video
-        const imgDataUrl = canvas.toDataURL('image/jpeg', 0.5);
-        video.src = imgDataUrl;
-      }
-    }
-
-    // Gọi hàm startCamera để bắt đầu mở camera và cập nhật video
-    startCamera();
-  </script>
+    <div id="video-container">
+        <img id="video" src="{{ url_for('camera_feed') }}" alt="Camera Feed">
+    </div>
 </body>
 </html>
