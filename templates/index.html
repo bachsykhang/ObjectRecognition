@@ -55,7 +55,7 @@
       <input type="submit" value="Upload" name="submit">
     </form>
     {% if not video_uploaded %}
-      <img src="https://static.chotot.com/storage/chotot-kinhnghiem/xe/2023/05/faafe38d-canh-bao-va-cham-tren-o-to.jpg">
+      <img src="{{ url_for('static', filename='images/anhnen.jpg') }}" alt="Anh Nen">
     {% else %}
       <img src="{{ url_for('video_feed') }}">
     {% endif %}
